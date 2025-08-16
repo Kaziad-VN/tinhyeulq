@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Đếm ngày yêu — Phiên bản LUNG LINH</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+  /* ===========================
+     RESET & BASE
+     =========================== */
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Poppins",system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    background: linear-gradient(120deg,#ffd9e8 0%, #f0d6ff 50%, #d7f0ff 100%);
+    overflow:hidden;
+    color:#3b2130;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* subtle grain overlay */
+  .grain {
+    position:fixed; inset:0; pointer-events:none; mix-blend-mode:overlay; opacity:0.04;
+    background-image: radial-gradient(rgba(0,0,0,0.02) 1px, transparent 1px);
+    background-size:3px 3px;
+    z-index:0;
+  }
+
+  /* ===========================
+     LAYOUT CARD (GLASSMORPH)
+     =========================== */
+  .card {
+    position:relative;
+    width:min(920px,94vw);
+    max-width:1100px;
+    display:grid;
+    /* changed to allow left column expand when names are long */
+    grid-template-columns: auto 1fr;
+    gap:28px;
+    padding:30px;
+    border-radius:24px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));
+    border:1px solid rgba(255,255,255,0.22);
+    box-shadow: 0 18px 50px rgba(90,45,80,0.12);
+    backdrop-filter: blur(12px) saturate(1.05);
+    z-index:2;
+    overflow:visible;
+  }
+
+  @media (max-width:880px){
+    .card{ grid-template-columns: 1fr; padding:18px; gap:18px; width:94vw; }
+  }
+
+  /* ===========================
+     LEFT PANEL: AVATARS & NAMES
+     =========================== */
+  .left {
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+  }
+
+  .avatar-row {
+    display:flex; gap:14px; align-items:center; justify-content:center;
+  }
+
+  /* avatar container has glow + border */
+  .avatar {
+    width:150px; height:150px; border-radius:50%;
+    object-fit:cover;
+    border:6px solid rgba(255,255,255,0.12);
+    box-shadow: 0 10px 30px rgba(155,48,90,0.14), inset 0 0 18px rgba(255,107,145,0.06);
+    transition: transform .28s ease, box-shadow .28s;
+    will-change: transform, box-shadow;
+  }
+  .avatar:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 20px 60px rgba(155,48,90,0.24); }
+
+  .names {
+    display:flex; align-items:center; gap:10px;
+    font-weight:600; font-size:1.15rem;
+    color:#3b2130;
+    text-align:center;
+    /* allow the names container to grow horizontally if needed */
+    white-space:nowrap;
+    overflow:visible;
+  }
+
+  /* Dancing Script gradient for long names */
+  .names .name {
+    font-family: "Dancing Script", "Poppins";
+    font-size:1.5rem;
+    background: linear-gradient(90deg, #ff6b91, #9b5cff);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    white-space:nowrap; /* do not allow wrap */
+    overflow:visible;
+    text-overflow:clip;
+  }
+
+  .names .name.wrap {
+    white-space:normal;
+    word-break:break-word;
+    text-align:center;
+    max-width:320px;
+  }
+
+  .quote {
+    color:#6f5d66; font-size:0.95rem; text-align:center; max-width:300px;
+  }
+
+  /* ===========================
+     RIGHT PANEL: COUNTER + CONTROLS
+     =========================== */
+  .right{
+    display:flex; flex-direction:column; justify-content:center; gap:8px; padding-right:10px;
+  }
+
+  .label {
+    color:#7b6f77; font-size:0.95rem; margin-left:6px;
+  }
+
+  .days {
+    display:flex; align-items:center; gap:14px;
+    font-family:"Dancing Script"; font-size:56px; line-height:1;
+    background: linear-gradient(90deg,#ff597f,#8b5bff);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow: 0 10px 30px rgba(155,48,90,0.12);
+    margin:6px 0;
+  }
+
+  .days .spark {
+    width:68px; height:68px; border-radius:14px; display:inline-grid; place-items:center;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    box-shadow: 0 12px 30px rgba(155,48,90,0.08);
+    font-size:22px;
+  }
+
+  .subtime {
+    color:#5b4350; font-size:0.98rem;
+  }
+
+  .controls {
+    display:flex; gap:12px; margin-top:16px; flex-wrap:wrap;
+  }
+  .btn {
+    padding:10px 14px; border-radius:12px; border:none; cursor:pointer; font-weight:600;
+    background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06); color:#3b2130;
+  }
+  .btn.primary {
+    background: linear-gradient(90deg,#ff6b91,#9b5cff); color:#fff; box-shadow: 0 14px 36px rgba(155,48,90,0.18);
+  }
+  .btn.ghost {
+    background:transparent; border:1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ===========================
+     MINI HEART (BOTTOM LEFT)
+     =========================== */
+  .mini-heart {
+    position:fixed; left:18px; bottom:18px; width:62px; height:62px; border-radius:50%;
+    border:none; background:linear-gradient(180deg,#ff6b91,#9b5cff); color:white; font-size:26px;
+    box-shadow: 0 12px 36px rgba(155,48,90,0.2); cursor:pointer; z-index:70;
+    display:flex; align-items:center; justify-content:center;
+    will-change: transform;
+    animation: heartbeat 2.6s ease-in-out infinite;
+  }
+  .mini-heart svg { width:34px; height:34px; fill:white; }
+  @keyframes heartbeat {
+    0%,100%{transform:scale(1)}
+    30%{transform:scale(1.12)}
+    55%{transform:scale(1)}
+    80%{transform:scale(1.06)}
+  }
+
+  /* ===========================
+     FALLING HEART (BACKGROUND)
+     =========================== */
+  .falling-heart {
+    position:fixed; pointer-events:none; z-index:1; opacity:0.95;
+    width:28px; height:28px; transform-origin:center;
+    animation: fall linear forwards;
+    filter: drop-shadow(0 10px 18px rgba(155,48,90,0.12));
+    will-change: transform, opacity;
+  }
+  @keyframes fall {
+    0% { transform: translateY(-8vh) rotate(0deg) scale(1); opacity:1; }
+    100% { transform: translateY(110vh) rotate(360deg) scale(0.85); opacity:0; }
+  }
+
+  /* ===========================
+     MODAL (full settings)
+     =========================== */
+  .modal {
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background: rgba(12,6,8,0.38); backdrop-filter: blur(6px);
+    visibility:hidden; opacity:0; z-index:80; transition: all .18s ease;
+  }
+  .modal.show { visibility:visible; opacity:1; }
+  .modal-card {
+    width:520px; background: #fff; border-radius:14px; padding:18px; box-shadow: 0 20px 50px rgba(30,20,30,0.28);
+  }
+  .field { margin-bottom:10px; display:flex; flex-direction:column; gap:6px; }
+  .field label { font-size:0.88rem; color:#4a3b45; }
+  .field input[type="text"], .field input[type="date"]{
+    padding:10px; border-radius:10px; border:1px solid #efe9ef; font-size:0.95rem;
+  }
+
+  /* typing cursor */
+  .typed { display:inline-block; border-right:2px solid rgba(59,33,48,0.6); padding-right:4px; margin-left:2px; animation: blink 1s steps(2,infinite); }
+  @keyframes blink { 50% { border-color: transparent; } }
+
+  /* small helpers */
+  .muted { color:#7b6f77; font-size:0.88rem; }
+  </style>
+</head>
+<body>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- MAIN CARD -->
+  <main class="card" role="main" aria-label="Đếm ngày yêu">
+    <!-- LEFT -->
+    <section class="left" aria-hidden="false">
+      <div class="avatar-row" role="img" aria-label="Avatars">
+        <img id="avatar1" class="avatar" src="https://i.ibb.co/3C5wS0P/user.png" alt="Avatar 1">
+        <img id="avatar2" class="avatar" src="https://i.ibb.co/3C5wS0P/user.png" alt="Avatar 2">
+      </div>
+
+      <div class="names" aria-hidden="false">
+        <div id="name1_display" class="name">Anh</div>
+        <div style="font-size:18px;color:var(--muted)"> &nbsp;♥&nbsp; </div>
+        <div id="name2_display" class="name">Em</div>
+      </div>
+
+      <div id="quote" class="quote">"Yêu là khi hai ta cùng cười vì một điều rất nhỏ."</div>
+    </section>
+
+    <!-- RIGHT -->
+    <section class="right">
+      <div class="counter" role="status" aria-live="polite">
+        <div class="label">Kỷ niệm của hai bạn</div>
+
+        <div class="days" id="days_display">
+          <div class="spark">💖</div>
+          <div style="display:flex;flex-direction:column;">
+            <div style="font-size:40px; line-height:1;"><span id="daysCount">---</span> ngày</div>
+            <div class="subtime" id="time_detail">Đã trôi qua: —</div>
+          </div>
+        </div>
+
+        <div class="controls" aria-hidden="false">
+          <button class="btn primary" id="openSettings">Chỉnh thông tin</button>
+          <button class="btn ghost" id="resetBtn">Đặt lại</button>
+        </div>
+
+        <div style="margin-top:10px">
+          <div class="muted">Lời nhắn:</div>
+          <div style="font-size:1rem; margin-top:6px;">
+            <span id="typedMessage"></span><span class="typed" id="cursor"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- container for hearts spawned by click (positioned over document) -->
+    <div id="heartsArea" class="hearts-area" aria-hidden="true"></div>
+  </main>
+
+  <!-- mini heart button (SVG) bottom-left -->
+  <button id="miniHeart" class="mini-heart" aria-label="Mở chỉnh sửa" title="Chỉnh thông tin">
+    <!-- Fixed prettier heart svg (clean path) -->
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12.1 21.35l-1.1-1.02C5.14 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.6 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.14 6.86-8.9 11.83l-1 0.02z"/>
+    </svg>
+  </button>
+
+  <!-- Modal for settings -->
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <h3 id="modalTitle" style="margin:0 0 8px 0; font-family:'Dancing Script'; font-size:22px;">Chỉnh thông tin hai bạn</h3>
+
+      <div class="field">
+        <label for="name1">Tên người 1</label>
+        <input id="name1" type="text" placeholder="Tên bạn (ví dụ: An)"/>
+      </div>
+
+      <div class="field">
+        <label for="avatarUrl1">Avatar 1 (URL)</label>
+        <input id="avatarUrl1" type="text" placeholder="https://..."/>
+      </div>
+
+      <div class="field">
+        <label for="name2">Tên người 2</label>
+        <input id="name2" type="text" placeholder="Tên người ấy (ví dụ: Bình)"/>
+      </div>
+
+      <div class="field">
+        <label for="avatarUrl2">Avatar 2 (URL)</label>
+        <input id="avatarUrl2" type="text" placeholder="https://..."/>
+      </div>
+
+      <div class="field">
+        <label for="startDate">Ngày bắt đầu (ngày yêu)</label>
+        <input id="startDate" type="date"/>
+      </div>
+
+      <div class="field">
+        <label for="customMessage">Lời nhắn (hiển thị typing)</label>
+        <input id="customMessage" type="text" placeholder="Mãi bên nhau nhé 💕"/>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:space-between;margin-top:8px;">
+        <button class="btn" id="cancelModal">Hủy</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn ghost" id="resetDateInModal" title="Chỉ đặt lại ngày bắt đầu">Đặt lại ngày</button>
+          <button class="btn primary" id="saveModal">Lưu</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px" class="muted">Mọi cài đặt sẽ lưu trên trình duyệt (localStorage).</div>
+    </div>
+  </div>
+
+  <script>
+  /* ===========================
+     ELEMENTS
+     =========================== */
+  const modal = document.getElementById('modal');
+  const miniHeart = document.getElementById('miniHeart');
+  const openSettingsBtn = document.getElementById('openSettings');
+  const cancelModal = document.getElementById('cancelModal');
+  const saveModal = document.getElementById('saveModal');
+
+  const name1In = document.getElementById('name1');
+  const avatarUrl1In = document.getElementById('avatarUrl1');
+  const name2In = document.getElementById('name2');
+  const avatarUrl2In = document.getElementById('avatarUrl2');
+  const startDateIn = document.getElementById('startDate');
+  const customMessageIn = document.getElementById('customMessage');
+  const resetDateInModal = document.getElementById('resetDateInModal');
+
+  const name1Display = document.getElementById('name1_display');
+  const name2Display = document.getElementById('name2_display');
+  const avatar1 = document.getElementById('avatar1');
+  const avatar2 = document.getElementById('avatar2');
+  const daysCount = document.getElementById('daysCount');
+  const timeDetail = document.getElementById('time_detail');
+  const typedMessage = document.getElementById('typedMessage');
+  const cursor = document.getElementById('cursor');
+
+  const heartsArea = document.getElementById('heartsArea');
+  const resetBtn = document.getElementById('resetBtn');
+
+  /* ===========================
+     STATE (localStorage)
+     =========================== */
+  let state = {
+    name1: localStorage.getItem('luv_name1') || 'Anh',
+    name2: localStorage.getItem('luv_name2') || 'Em',
+    avatar1: localStorage.getItem('luv_avatar1') || 'https://i.ibb.co/3C5wS0P/user.png',
+    avatar2: localStorage.getItem('luv_avatar2') || 'https://i.ibb.co/3C5wS0P/user.png',
+    startDate: localStorage.getItem('luv_startDate') || '',
+    message: localStorage.getItem('luv_message') || 'Mãi bên nhau nhé 💕',
+    fallingHearts: localStorage.getItem('luv_falling') || 'on'
+  };
+
+  /* ===========================
+     INIT UI
+     =========================== */
+  function initUI(){
+    name1Display.textContent = state.name1;
+    name2Display.textContent = state.name2;
+    avatar1.src = state.avatar1;
+    avatar2.src = state.avatar2;
+
+    // keep no-wrap for names
+    name1Display.style.whiteSpace = 'nowrap';
+    name2Display.style.whiteSpace = 'nowrap';
+
+    name1In.value = state.name1;
+    name2In.value = state.name2;
+    avatarUrl1In.value = state.avatar1;
+    avatarUrl2In.value = state.avatar2;
+    startDateIn.value = state.startDate;
+    customMessageIn.value = state.message;
+
+    startTyping(state.message);
+  }
+
+  function applyNameWrapping(el){
+    const txt = el.textContent || '';
+    if(txt.length > 18 || txt.split(' ').length > 3){
+      el.classList.add('wrap');
+    } else {
+      el.classList.remove('wrap');
+    }
+  }
+
+  function saveState(){
+    localStorage.setItem('luv_name1', state.name1);
+    localStorage.setItem('luv_name2', state.name2);
+    localStorage.setItem('luv_avatar1', state.avatar1);
+    localStorage.setItem('luv_avatar2', state.avatar2);
+    localStorage.setItem('luv_startDate', state.startDate);
+    localStorage.setItem('luv_message', state.message);
+    localStorage.setItem('luv_falling', state.fallingHearts);
+  }
+
+  /* ===========================
+     COUNTER (Y M D H M S)
+     =========================== */
+  function updateCounter(){
+    if(!state.startDate){
+      daysCount.textContent = '---';
+      timeDetail.textContent = 'Hãy bấm "Chỉnh thông tin" để chọn ngày bắt đầu';
+      return;
+    }
+    const start = new Date(state.startDate + 'T00:00:00');
+    const now = new Date();
+    const diffMs = now - start;
+    const totalDays = Math.floor(diffMs / (24*60*60*1000));
+    daysCount.textContent = totalDays >= 0 ? totalDays : '---';
+
+    let years = now.getFullYear() - start.getFullYear();
+    let months = now.getMonth() - start.getMonth();
+    let days = now.getDate() - start.getDate();
+    let hours = now.getHours() - start.getHours();
+    let minutes = now.getMinutes() - start.getMinutes();
+    let seconds = now.getSeconds() - start.getSeconds();
+
+    if(seconds < 0){ seconds += 60; minutes--; }
+    if(minutes < 0){ minutes += 60; hours--; }
+    if(hours < 0){ hours += 24; days--; }
+    if(days < 0){
+      months--;
+      const prevMonthDays = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+      days += prevMonthDays;
+    }
+    if(months < 0){ months += 12; years--; }
+
+    timeDetail.textContent = `Đã trôi qua: ${years} năm, ${months} tháng, ${days} ngày, ${hours} giờ, ${minutes} phút, ${seconds} giây.`;
+  }
+
+  /* ===========================
+     TYPING
+     =========================== */
+  let typingTimer = null;
+  function startTyping(text){
+    clearTimeout(typingTimer);
+    typedMessage.textContent = '';
+    cursor.style.display = 'inline-block';
+    let i = 0;
+    const speed = 90;
+    function step(){
+      if(i <= text.length){
+        typedMessage.textContent = text.slice(0, i);
+        i++;
+        typingTimer = setTimeout(step, speed);
+      } else {
+        setTimeout(()=>{ cursor.style.display = 'none'; }, 600);
+      }
+    }
+    step();
+  }
+
+  /* ===========================
+     HEART BURST
+     =========================== */
+  function createHeartSVG(color1, color2, size){
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','0 0 24 24');
+    svg.setAttribute('width', size);
+    svg.setAttribute('height', size);
+    const gradId = 'g'+Math.random().toString(36).slice(2);
+    svg.innerHTML = `
+      <defs>
+        <linearGradient id="${gradId}" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="${color1}" />
+          <stop offset="1" stop-color="${color2}" />
+        </linearGradient>
+      </defs>
+      <path fill="url(#${gradId})" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5
+           2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09
+           C13.09 3.81 14.76 3 16.5 3
+           19.58 3 22 5.42 22 8.5
+           c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    `;
+    return svg;
+  }
+
+  function burstHeartsFromButton(el, count = 6){
+    const rect = el.getBoundingClientRect();
+    const originX = rect.left + rect.width/2;
+    const originY = rect.top + rect.height/2;
+
+    for(let i = 0; i < count; i++){
+      (function(){
+        const heartWrapper = document.createElement('div');
+        heartWrapper.style.position = 'fixed';
+        heartWrapper.style.left = `${originX}px`;
+        heartWrapper.style.top = `${originY}px`;
+        heartWrapper.style.pointerEvents = 'none';
+        heartWrapper.style.zIndex = 200;
+        heartWrapper.style.transform = 'translate(-50%,-50%)';
+        heartWrapper.style.willChange = 'transform,opacity';
+
+        const size = 18 + Math.random()*28;
+        const palette = [
+          ['#ff9a9e','#fecfef'],
+          ['#ffd4e6','#f9d6ff'],
+          ['#c084fc','#fbc2eb'],
+          ['#ffd6a5','#ff9a9e'],
+          ['#a1c4fd','#c2e9fb']
+        ];
+        const colors = palette[Math.floor(Math.random()*palette.length)];
+
+        const svg = createHeartSVG(colors[0], colors[1], size);
+        svg.style.display = 'block';
+        svg.style.width = `${size}px`;
+        svg.style.height = `${size}px`;
+        svg.style.transform = `translateZ(0)`;
+
+        heartWrapper.appendChild(svg);
+        document.body.appendChild(heartWrapper);
+
+        const angle = -60 + (Math.random()*60 - 30);
+        const distance = 160 + Math.random()*160;
+        const dx = Math.cos(angle * Math.PI/180) * distance * (Math.random()*0.8 + 0.6);
+        const dy = Math.sin(angle * Math.PI/180) * distance;
+        const rot = (Math.random()*60 - 30);
+        const duration = 900 + Math.random()*900;
+
+        const start = performance.now();
+        function animate(t){
+          const elapsed = t - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const ease = 1 - Math.pow(1 - progress, 3);
+          const curX = originX + dx * ease;
+          const curY = originY + dy * ease - 30 * Math.sin(ease * Math.PI);
+          heartWrapper.style.left = `${curX}px`;
+          heartWrapper.style.top = `${curY}px`;
+          heartWrapper.style.opacity = `${1 - ease}`;
+          heartWrapper.style.transform = `translate(-50%,-50%) rotate(${rot * ease}deg) scale(${1 - 0.15*ease})`;
+          if(progress < 1) requestAnimationFrame(animate);
+          else heartWrapper.remove();
+        }
+        requestAnimationFrame(animate);
+      })();
+    }
+  }
+
+  /* ===========================
+     FALLING HEARTS (lighter)
+     =========================== */
+  let fallingInterval = null;
+  function startFallingHearts(){
+    if(fallingInterval) return;
+    fallingInterval = setInterval(()=> {
+      const spawn = Math.random() < 0.45 ? 1 : 0;
+      for(let i=0;i<spawn;i++) spawnOneFallingHeart();
+    }, 900);
+  }
+  function stopFallingHearts(){
+    if(fallingInterval){ clearInterval(fallingInterval); fallingInterval = null; }
+  }
+  function spawnOneFallingHeart(){
+    const heart = document.createElement('div');
+    heart.className = 'falling-heart';
+    heart.style.left = `${Math.random()*100}vw`;
+    const size = 14 + Math.random()*22;
+    heart.style.width = `${size}px`;
+    heart.style.height = `${size}px`;
+    heart.style.opacity = `${0.55 + Math.random()*0.45}`;
+    const svg = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
+      <defs><linearGradient id="f${Math.random().toString(36).slice(2)}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ff9a9e"/><stop offset="1" stop-color="#ffd1f0"/></linearGradient></defs>
+      <path fill="url(#f${Math.random().toString(36).slice(2)})" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5
+        2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3
+        19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+    heart.innerHTML = svg;
+    document.body.appendChild(heart);
+
+    const duration = 4200 + Math.random()*3600;
+    const drift = (Math.random()*80 - 40);
+    const startTop = -8 - Math.random()*8;
+    heart.style.top = `${startTop}vh`;
+
+    const start = performance.now();
+    const initLeft = parseFloat(heart.style.left);
+    function animate(t){
+      const elapsed = t - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = progress;
+      const curTop = startTop + (110 + Math.random()*20) * ease;
+      const curLeft = initLeft + drift * ease;
+      heart.style.left = `${curLeft}vw`;
+      heart.style.top = `${curTop}vh`;
+      heart.style.transform = `rotate(${progress*360}deg) scale(${1 - 0.22*progress})`;
+      heart.style.opacity = `${1 - progress}`;
+      if(progress < 1) requestAnimationFrame(animate);
+      else heart.remove();
+    }
+    requestAnimationFrame(animate);
+  }
+
+  /* ===========================
+     UI INTERACTIONS (modal open/close/save)
+     =========================== */
+  function openModal(){ modal.classList.add('show'); }
+  function closeModal(){ modal.classList.remove('show'); }
+
+  miniHeart.addEventListener('click', () => {
+    openModal();
+    burstHeartsFromButton(miniHeart, 6);
+  });
+
+  openSettingsBtn && openSettingsBtn.addEventListener('click', openModal);
+  cancelModal.addEventListener('click', closeModal);
+
+  saveModal.addEventListener('click', ()=>{
+    const n1 = name1In.value.trim();
+    const n2 = name2In.value.trim();
+    const a1 = avatarUrl1In.value.trim();
+    const a2 = avatarUrl2In.value.trim();
+    const sd = startDateIn.value;
+    const msg = customMessageIn.value.trim();
+
+    if(n1) state.name1 = n1;
+    if(n2) state.name2 = n2;
+    if(a1) state.avatar1 = a1;
+    if(a2) state.avatar2 = a2;
+    if(sd) state.startDate = sd;
+    if(msg) state.message = msg;
+
+    saveState();
+    initUI();
+    updateCounter();
+    closeModal();
+  });
+
+  resetDateInModal.addEventListener('click', ()=>{
+    if(confirm('Bạn muốn đặt lại "Ngày bắt đầu" về trống?')) {
+      state.startDate = '';
+      startDateIn.value = '';
+      localStorage.removeItem('luv_startDate');
+      saveState();
+      updateCounter();
+    }
+  });
+
+  // ESC closes modal
+  window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeModal(); });
+
+  /* ===========================
+     MINI HEART CLICK BURST
+     =========================== */
+  miniHeart.addEventListener('click', (e)=>{
+    burstHeartsFromButton(e.currentTarget, 6);
+  });
+
+  /* ===========================
+     RESET main (full) button
+     =========================== */
+  resetBtn.addEventListener('click', ()=>{
+    if(confirm('Bạn có muốn đặt lại toàn bộ (tên, avatar, ngày, lời nhắn)?')) {
+      localStorage.removeItem('luv_name1');
+      localStorage.removeItem('luv_name2');
+      localStorage.removeItem('luv_avatar1');
+      localStorage.removeItem('luv_avatar2');
+      localStorage.removeItem('luv_startDate');
+      localStorage.removeItem('luv_message');
+      localStorage.removeItem('luv_falling');
+      state = {
+        name1:'Anh', name2:'Em',
+        avatar1:'https://i.ibb.co/3C5wS0P/user.png',
+        avatar2:'https://i.ibb.co/3C5wS0P/user.png',
+        startDate:'', message:'Mãi bên nhau nhé 💕', fallingHearts:'on'
+      };
+      initUI();
+      updateCounter();
+    }
+  });
+
+  /* ===========================
+     INITIALIZE / INTERVALS
+     =========================== */
+  // update counter per second
+  setInterval(updateCounter, 1000);
+
+  // falling hearts optional
+  if(state.fallingHearts === 'on') startFallingHearts();
+
+  // init
+  initUI();
+  updateCounter();
+
+  // periodic subtle spawning
+  setInterval(()=>{
+    if(Math.random() < 0.45) spawnOneFallingHeart();
+  }, 1200);
+
+  // expose helpers
+  window.__luv = {
+    burst: (n)=>burstHeartsFromButton(miniHeart, n||6),
+    spawnFalling: spawnOneFallingHeart,
+    startFalling: startFallingHearts,
+    stopFalling: stopFallingHearts,
+    updateCounter,
+    startTyping
+  };
+  </script>
+</body>
+</html>
