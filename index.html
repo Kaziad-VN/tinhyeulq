@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PDF</title>
+<title>PDF Tool</title>
 
 <!-- LIB -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -11,97 +11,99 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
-  <link rel="icon" href="https://lh3.googleusercontent.com/a/ACg8ocKmXTXh7YnKdycDCZXMBH_5D79UE14STXrbOZYS0It0WWTTTFf2=s288-c-no" type="image/png">
+
+<link rel="icon" href="https://lh3.googleusercontent.com/a/ACg8ocKmXTXh7YnKdycDCZXMBH_5D79UE14STXrbOZYS0It0WWTTTFf2=s288-c-no">
+
 <style>
 *{box-sizing:border-box;font-family:system-ui}
 body{
-  margin:0;min-height:100vh;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  color:#fff;padding:12px
+margin:0;min-height:100vh;
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:#fff;padding:12px
 }
 .app{
-  max-width:1100px;margin:auto;
-  background:rgba(255,255,255,.12);
-  backdrop-filter:blur(14px);
-  border-radius:22px;padding:20px
+max-width:1100px;margin:auto;
+background:rgba(255,255,255,.12);
+backdrop-filter:blur(14px);
+border-radius:22px;padding:20px
 }
 .logo{display:flex;justify-content:center;margin-bottom:12px}
 .logo img{height:70px;border-radius:18px}
 .tabs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .tabs button{
-  padding:10px 18px;border-radius:20px;border:none;
-  background:rgba(255,255,255,.2);color:#fff;
-  font-weight:600;cursor:pointer
+padding:10px 18px;border-radius:20px;border:none;
+background:rgba(255,255,255,.2);color:#fff;
+font-weight:600;cursor:pointer
 }
 .tabs button.active{
-  background:linear-gradient(135deg,#00c6ff,#0072ff)
+background:linear-gradient(135deg,#00c6ff,#0072ff)
 }
 .panel{display:none;margin-top:18px}
 .panel.active{display:block}
 .upload{
-  border:2px dashed rgba(255,255,255,.35);
-  padding:26px;text-align:center;
-  border-radius:16px;cursor:pointer
+border:2px dashed rgba(255,255,255,.35);
+padding:26px;text-align:center;
+border-radius:16px;cursor:pointer
 }
 .upload input{display:none}
 .grid{
-  margin-top:20px;
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
-  gap:14px
+margin-top:20px;
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+gap:14px
 }
 .file{
-  position:relative;
-  background:rgba(0,0,0,.35);
-  border-radius:12px;padding:10px
+position:relative;
+background:rgba(0,0,0,.35);
+border-radius:12px;padding:10px
 }
 .file img{
-  width:100%;height:120px;
-  object-fit:cover;border-radius:8px
+width:100%;height:120px;
+object-fit:cover;border-radius:8px
 }
 .file-name{
-  margin-top:6px;font-size:13px;
-  text-align:center;word-break:break-all
+margin-top:6px;font-size:13px;
+text-align:center;word-break:break-all
 }
 .menu{
-  position:absolute;inset:0;
-  background:rgba(0,0,0,.65);
-  display:none;align-items:center;
-  justify-content:center;gap:10px;
-  border-radius:12px
+position:absolute;inset:0;
+background:rgba(0,0,0,.65);
+display:none;align-items:center;
+justify-content:center;gap:10px;
+border-radius:12px
 }
 .file.active .menu{display:flex}
 .menu button{
-  border:none;padding:8px 12px;
-  border-radius:8px;cursor:pointer
+border:none;padding:8px 12px;
+border-radius:8px;cursor:pointer
 }
 .actions{
-  margin-top:18px;
-  display:flex;gap:10px;
-  justify-content:center;flex-wrap:wrap
+margin-top:18px;
+display:flex;gap:10px;
+justify-content:center;flex-wrap:wrap
 }
 .actions button{
-  padding:12px 22px;
-  border-radius:14px;border:none;
-  background:linear-gradient(135deg,#00c6ff,#0072ff);
-  color:#fff;font-weight:600;cursor:pointer
+padding:12px 22px;
+border-radius:14px;border:none;
+background:linear-gradient(135deg,#00c6ff,#0072ff);
+color:#fff;font-weight:600;cursor:pointer
 }
 .reset{background:linear-gradient(135deg,#ff416c,#ff4b2b)}
 .preview{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.85);
-  display:none;align-items:center;
-  justify-content:center;z-index:99
+position:fixed;inset:0;
+background:rgba(0,0,0,.85);
+display:none;align-items:center;
+justify-content:center;z-index:99
 }
 .preview img,.preview iframe{
-  max-width:92%;max-height:92%;
-  background:#fff
+max-width:92%;max-height:92%;
+background:#fff
 }
 input.rename{
-  width:100%;padding:6px;
-  border-radius:6px;border:none;
-  background:#111;color:#fff;
-  text-align:center;font-size:14px
+width:100%;padding:6px;
+border-radius:6px;border:none;
+background:#111;color:#fff;
+text-align:center;font-size:14px
 }
 </style>
 </head>
@@ -119,32 +121,37 @@ input.rename{
 <button onclick="switchTab(2)">Word ➜ PDF</button>
 </div>
 
+<!-- IMAGE -->
 <div class="panel active">
 <label class="upload">
 <input type="file" id="imgInput" accept="image/*" multiple>
 📸 Chọn ảnh
 </label>
 <div class="actions">
-<button onclick="convertImg()">Chuyển PDF A4</button>
-<button onclick="download()">Tải</button>
-<button class="reset" onclick="resetAll()">Quay lại</button>
-</div>
-<div class="grid" id="grid"></div>
-</div>
-
-<div class="panel">
-<label class="upload">
-<input type="file" id="pdfInput" accept="application/pdf">
-📄 Chọn PDF
-</label>
-<div class="actions">
-<button onclick="convertPdf()">Chuyển ảnh</button>
+<button onclick="convertImgSingle()">📄 Gộp ảnh → 1 PDF</button>
+<button onclick="convertImgMulti()">📑 Mỗi ảnh → 1 PDF</button>
 <button onclick="download()">Tải</button>
 <button class="reset" onclick="resetAll()">Quay lại</button>
 </div>
 <div class="grid"></div>
 </div>
 
+<!-- PDF -->
+<div class="panel">
+<label class="upload">
+<input type="file" id="pdfInput" accept="application/pdf">
+📄 Chọn PDF
+</label>
+<div class="actions">
+<button onclick="compressPdf()">🗜 Nén PDF</button>
+<button onclick="convertPdf()">🖼 PDF → Ảnh</button>
+<button onclick="download()">Tải</button>
+<button class="reset" onclick="resetAll()">Quay lại</button>
+</div>
+<div class="grid"></div>
+</div>
+
+<!-- WORD -->
 <div class="panel">
 <label class="upload">
 <input type="file" id="wordInput" accept=".doc,.docx">
@@ -165,130 +172,145 @@ input.rename{
 <script>
 const { jsPDF } = window.jspdf;
 let files=[];
-const grid=document.getElementById("grid");
 
-/* ===== MOBILE CHECK ===== */
-function isMobile(){
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
+/* ===== UTIL ===== */
+const isMobile=()=>/Android|iPhone|iPad/i.test(navigator.userAgent);
+const getActiveGrid=()=>document.querySelector(".panel.active .grid");
 
 /* ===== TAB ===== */
 function switchTab(i){
-document.querySelectorAll(".tabs button")
-.forEach((b,x)=>b.classList.toggle("active",x===i));
-document.querySelectorAll(".panel")
-.forEach((p,x)=>p.classList.toggle("active",x===i));
+document.querySelectorAll(".tabs button").forEach((b,x)=>b.classList.toggle("active",x===i));
+document.querySelectorAll(".panel").forEach((p,x)=>p.classList.toggle("active",x===i));
 resetAll();
 }
 
 /* ===== RESET ===== */
 function resetAll(){
-files=[];grid.innerHTML="";
+files=[];
+document.querySelectorAll(".grid").forEach(g=>g.innerHTML="");
 imgInput.value=pdfInput.value=wordInput.value="";
 }
 
-/* ===== LOAD FILE ===== */
+/* ===== LOAD ===== */
 imgInput.onchange=()=>loadFiles(imgInput.files,"image");
 pdfInput.onchange=()=>loadFiles(pdfInput.files,"pdf");
 wordInput.onchange=()=>loadFiles(wordInput.files,"word");
 
 function loadFiles(list,type){
-files=[];
-for(let f of list){
-files.push({
+files=[...list].map(f=>({
 name:f.name,
 blob:f,
 type,
 url:type==="image"?URL.createObjectURL(f):null
-});
-}
+}));
 render();
 }
 
-/* ===== RENDER ===== */
+/* ===== RENDER (FIX HIỂN THỊ) ===== */
 function render(){
+const grid=getActiveGrid();
 grid.innerHTML="";
 files.forEach((f,i)=>{
-const div=document.createElement("div");
-div.className="file";
-div.innerHTML=`
-${f.type==="image"
-?`<img src="${f.url}">`
-:`<img src="https://cdn-icons-png.flaticon.com/512/337/337946.png">`}
+const d=document.createElement("div");
+d.className="file";
+d.innerHTML=`
+<img src="${f.url||'https://cdn-icons-png.flaticon.com/512/337/337946.png'}">
 <div class="file-name"><span id="n${i}">${f.name}</span></div>
 <div class="menu">
 <button onclick="view(event,${i})">👁</button>
 <button onclick="rename(event,${i})">✏️</button>
 <button onclick="del(event,${i})">🗑</button>
 </div>`;
-div.onclick=()=>div.classList.toggle("active");
-grid.appendChild(div);
+d.onclick=()=>d.classList.toggle("active");
+grid.appendChild(d);
 });
 }
 
 /* ===== RENAME ===== */
 function rename(e,i){
 e.stopPropagation();
-document.querySelectorAll(".file")[i].classList.remove("active");
 const s=document.getElementById("n"+i);
-const old=files[i].name;
-s.outerHTML=`
-<input class="rename" value="${old}"
+s.outerHTML=`<input class="rename" value="${files[i].name}"
 onblur="save(${i},this.value)"
 onkeydown="if(event.key==='Enter')this.blur()" autofocus>`;
 }
-function save(i,v){
-if(v.trim()) files[i].name=v.trim();
-render();
-}
+function save(i,v){ if(v.trim()) files[i].name=v.trim(); render(); }
 
 /* ===== DELETE ===== */
-function del(e,i){
-e.stopPropagation();
-files.splice(i,1);
-render();
-}
+function del(e,i){ e.stopPropagation(); files.splice(i,1); render(); }
 
 /* ===== VIEW ===== */
 function view(e,i){
 e.stopPropagation();
-preview.innerHTML=files[i].type==="image"
+preview.innerHTML=files[i].url
 ?`<img src="${files[i].url}">`
 :`<iframe src="${URL.createObjectURL(files[i].blob)}"></iframe>`;
 preview.style.display="flex";
 }
 
-/* ===== CONVERT ===== */
-async function convertImg(){
+/* ===== IMAGE → 1 PDF ===== */
+async function convertImgSingle(){
+const pdf=new jsPDF();
+for(let i=0;i<files.length;i++){
+const img=new Image();img.src=files[i].url;
+await img.decode();
+if(i>0) pdf.addPage();
+pdf.addImage(img,"JPEG",10,10,190,277,"","FAST");
+}
+files=[{name:"merged.pdf",blob:pdf.output("blob")}];
+render();
+}
+
+/* ===== IMAGE → MANY PDF ===== */
+async function convertImgMulti(){
 const out=[];
 for(const f of files){
 const img=new Image();img.src=f.url;
 await img.decode();
-const pdf=new jsPDF({unit:"mm",format:"a4"});
-const w=210,h=297;
-const r=Math.min(w/img.width,h/img.height);
-pdf.addImage(img,"JPEG",(w-img.width*r)/2,(h-img.height*r)/2,img.width*r,img.height*r);
+const pdf=new jsPDF();
+pdf.addImage(img,"JPEG",10,10,190,277,"","FAST");
 out.push({name:f.name.replace(/\..+/,"")+".pdf",blob:pdf.output("blob")});
 }
 files=out;render();
 }
 
+/* ===== PDF → IMAGE ===== */
 async function convertPdf(){
 const out=[];
 for(const f of files){
 const pdf=await pdfjsLib.getDocument(URL.createObjectURL(f.blob)).promise;
 for(let i=1;i<=pdf.numPages;i++){
-const page=await pdf.getPage(i);
+const p=await pdf.getPage(i);
 const c=document.createElement("canvas");
-const v=page.getViewport({scale:2});
+const v=p.getViewport({scale:1.5});
 c.width=v.width;c.height=v.height;
-await page.render({canvasContext:c.getContext("2d"),viewport:v}).promise;
-const b=await new Promise(r=>c.toBlob(r,"image/jpeg",1));
-out.push({name:`${f.name}_page${i}.jpg`,blob:b,type:"image",url:URL.createObjectURL(b)});
+await p.render({canvasContext:c.getContext("2d"),viewport:v}).promise;
+const b=await new Promise(r=>c.toBlob(r,"image/jpeg",0.85));
+out.push({name:`${f.name}_p${i}.jpg`,blob:b,type:"image",url:URL.createObjectURL(b)});
 }}
 files=out;render();
 }
 
+/* ===== COMPRESS PDF ===== */
+async function compressPdf(){
+const f=files[0];
+const pdf=await pdfjsLib.getDocument(URL.createObjectURL(f.blob)).promise;
+const out=new jsPDF();
+for(let i=1;i<=pdf.numPages;i++){
+const p=await pdf.getPage(i);
+const c=document.createElement("canvas");
+const v=p.getViewport({scale:1.2});
+c.width=v.width;c.height=v.height;
+await p.render({canvasContext:c.getContext("2d"),viewport:v}).promise;
+const img=c.toDataURL("image/jpeg",0.7);
+if(i>1) out.addPage();
+out.addImage(img,"JPEG",10,10,190,277,"","FAST");
+}
+files=[{name:"compressed_"+f.name,blob:out.output("blob")}];
+render();
+}
+
+/* ===== WORD ===== */
 async function convertWord(){
 const f=files[0];
 const ab=await f.blob.arrayBuffer();
@@ -301,28 +323,15 @@ render();
 
 /* ===== DOWNLOAD ===== */
 async function download(){
-if(!files.length){alert("Không có file");return;}
-
-/* MOBILE */
+if(!files.length)return alert("Không có file");
 if(isMobile()){
-if(files.length===1){
-saveAs(files[0].blob,files[0].name);return;
-}
-for(const f of files){
-await new Promise(r=>setTimeout(r,400));
-saveAs(f.blob,f.name);
-}
-return;
-}
-
-/* DESKTOP */
-if(files.length===1){
-saveAs(files[0].blob,files[0].name);return;
-}
+for(const f of files){ saveAs(f.blob,f.name); await new Promise(r=>setTimeout(r,300)); }
+}else{
+if(files.length===1) return saveAs(files[0].blob,files[0].name);
 const zip=new JSZip();
 files.forEach(f=>zip.file(f.name,f.blob));
-const blob=await zip.generateAsync({type:"blob"});
-saveAs(blob,"files.zip");
+saveAs(await zip.generateAsync({type:"blob"}),"files.zip");
+}
 }
 </script>
 </body>
